@@ -2,37 +2,53 @@ import numpy as np
 from state import State
 
 GAMMA = 0.9
-THETA = 0.0001
-
+THETA = 22
 
 # THIS CODE IS NOT COMPLETED YET!!!
 
+id_state = {}
 
-# TODO: review the action queue in this function
+
 def reward(current_state, action):
-    new_state = State(current_state.loc_a + action, current_state.loc_b - action)
+    new_state = current_state.copy()
+    if 0 <= current_state.loc_a + action < 20 and current_state.loc_b - action > 0:
+        new_loc_a = current_state.loc_a + action
+        new_loc_b = current_state.loc_b - action
+        _id = find_state_id(new_loc_a, new_loc_b)
+
+        new_state = State(new_loc_a, new_loc_b, _id)
+    else:
+        action = 0
 
     req_a, req_b, ret_a, ret_b, = np.random.poisson((3, 4, 3, 2))
-    if req_a > current_state.loc_a:
-        req_a = current_state.loc_a
+    if req_a > new_state.loc_a:
+        req_a = new_state.loc_a
 
-    if req_b > current_state.loc_b:
-        req_b = current_state.loc_b
+    if req_b > new_state.loc_b:
+        req_b = new_state.loc_b
 
-    while ret_a + ret_b + current_state.loc_a + current_state.loc_b > 20:
+    while ret_a + ret_b + new_state.loc_a + new_state.loc_b > 20:
         ret_a -= 1
         ret_b -= 1
+
+    if ret_a < 0:
+        ret_a = 0
+    if ret_b < 0:
+        ret_b = 0
 
     total_reward = -np.abs(action) * 2
     total_reward += 10 * (req_a + req_b)
 
-    current_state.loc_a -= req_a
-    current_state.loc_b -= req_b
+    new_state.loc_a -= req_a
+    new_state.loc_b -= req_b
 
-    current_state.loc_a += ret_a
-    current_state.loc_b += ret_b
+    if new_state.loc_a + ret_a + new_state.loc_b + ret_b < 20:
+        new_state.loc_a += ret_a
+        new_state.loc_b += ret_b
 
-    return new_state, total_reward
+    new_state.id = find_state_id(new_state.loc_a, new_state.loc_b)
+
+    return new_state.id, total_reward
 
 
 def policy_evaluation(state_value, policy):
@@ -79,18 +95,25 @@ def print_policy(policy):
         i.print()
 
 
+def find_state_id(loc_a, loc_b):
+    return id_state[(loc_a, loc_b)]
+
+
 def main():
     initial_policy = []
+    id_count = 0
     for i in range(21):
         for j in range(21):
             if i + j <= 20:
-                initial_policy.append(State(i, j))
+                initial_policy.append(State(i, j, id_count))
+                id_state[(i, j)] = id_count
+                id_count += 1
 
     initial_policy = fix_policy(initial_policy)
 
     state_value = np.zeros(len(initial_policy))
 
-    # policy_evaluation(state_value, initial_policy)
+    policy_evaluation(state_value, initial_policy)
     # print_policy(initial_policy)
 
 
