@@ -2,11 +2,10 @@ import numpy as np
 from state import State
 
 GAMMA = 0.9
-THETA = 22
-
-# THIS CODE IS NOT COMPLETED YET!!!
 
 id_state = {}
+
+policy_improvement_count = 0
 
 
 def reward(current_state, action):
@@ -53,6 +52,7 @@ def reward(current_state, action):
 
 def policy_evaluation(state_value, policy):
     copy_value = state_value.copy()
+    count = 0
 
     while True:
         delta = 0
@@ -65,26 +65,26 @@ def policy_evaluation(state_value, policy):
 
         state_value = copy_value.copy()
         copy_value = np.zeros(len(state_value))
+        count += 1
 
-        if delta < THETA:
+        if count >= 20:
             break
 
     return state_value
 
 
 def policy_improvement(state_value, policy):
-    policy_stable = True
+    global policy_improvement_count
 
     for i in range(len(state_value)):
         state = policy[i]
-        old_action = state.best_action()
 
         best_state_value = -999
         best_action = 0
         for action in range(-5, 6):
             if is_legal_action(state.loc_a, state.loc_b, action):
                 if state_value[find_state_id(state.loc_a + action, state.loc_b - action)] > best_state_value:
-                    best_state_value = state_value[find_state_id(state.loc_a + action, state.loc_b + action)]
+                    best_state_value = state_value[find_state_id(state.loc_a + action, state.loc_b - action)]
                     best_action = action
 
         for action_prob in state.action_prob:
@@ -93,10 +93,9 @@ def policy_improvement(state_value, policy):
             else:
                 action_prob[1] = 1
 
-        if old_action != best_action:
-            policy_stable = False
+    policy_improvement_count += 1
 
-    if policy_stable:
+    if policy_improvement_count > 20:
         return policy
     else:
         return policy_improvement(policy_evaluation(state_value, policy), policy)
@@ -151,9 +150,9 @@ def main():
     state_value = np.zeros(len(initial_policy))
     state_value = policy_evaluation(state_value, initial_policy)
 
-    policy_improvement(state_value, initial_policy)
+    optimal_policy = policy_improvement(state_value, initial_policy)
 
-    print("the end")
+    print("the end\nput a breakpoint to this line to see policy")
 
 
 if __name__ == '__main__':
