@@ -83,8 +83,9 @@ def policy_improvement(state_value, policy):
         best_action = 0
         for action in range(-5, 6):
             if is_legal_action(state.loc_a, state.loc_b, action):
-                if state_value[find_state_id(state.loc_a + action, state.loc_b - action)] > best_state_value:
-                    best_state_value = state_value[find_state_id(state.loc_a + action, state.loc_b - action)]
+                new_state, r = reward(state, action)
+                if r + GAMMA * state_value[new_state] > best_state_value:
+                    best_state_value = r + GAMMA * state_value[new_state]
                     best_action = action
 
         for action_prob in state.action_prob:
