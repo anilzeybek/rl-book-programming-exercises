@@ -13,6 +13,14 @@ class State:
         self.loc_a += action
         self.loc_b -= action
 
+    def best_action(self):
+        best_action_prob = [0, 0]
+        for action_prob in self.action_prob:
+            if action_prob[1] > best_action_prob[1]:
+                best_action_prob = action_prob
+
+        return best_action_prob[0]
+
     def print(self):
         print(f'{self.id}: {self.loc_a}, {self.loc_b}')
 

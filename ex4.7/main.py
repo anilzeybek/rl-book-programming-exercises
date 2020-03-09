@@ -11,7 +11,7 @@ id_state = {}
 
 def reward(current_state, action):
     new_state = current_state.copy()
-    if 0 <= current_state.loc_a + action < 20 and current_state.loc_b - action > 0:
+    if 0 <= current_state.loc_a + action < 20 and current_state.loc_b - action >= 0:
         new_loc_a = current_state.loc_a + action
         new_loc_b = current_state.loc_b - action
         _id = find_state_id(new_loc_a, new_loc_b)
@@ -69,7 +69,37 @@ def policy_evaluation(state_value, policy):
         if delta < THETA:
             break
 
-    print(state_value)
+    return state_value
+
+
+def policy_improvement(state_value, policy):
+    policy_stable = True
+
+    for i in range(len(state_value)):
+        state = policy[i]
+        old_action = state.best_action()
+
+        best_state_value = -999
+        best_action = 0
+        for action in range(-5, 6):
+            if is_legal_action(state.loc_a, state.loc_b, action):
+                if state_value[find_state_id(state.loc_a + action, state.loc_b - action)] > best_state_value:
+                    best_state_value = state_value[find_state_id(state.loc_a + action, state.loc_b + action)]
+                    best_action = action
+
+        for action_prob in state.action_prob:
+            if action_prob[0] != best_action:
+                action_prob[1] = 0
+            else:
+                action_prob[1] = 1
+
+        if old_action != best_action:
+            policy_stable = False
+
+    if policy_stable:
+        return policy
+    else:
+        return policy_improvement(policy_evaluation(state_value, policy), policy)
 
 
 def fix_policy(policy):
@@ -99,6 +129,13 @@ def find_state_id(loc_a, loc_b):
     return id_state[(loc_a, loc_b)]
 
 
+def is_legal_action(loc_a, loc_b, action):
+    if 0 <= loc_a + action < 20 and loc_b - action >= 0:
+        return True
+
+    return False
+
+
 def main():
     initial_policy = []
     id_count = 0
@@ -112,9 +149,11 @@ def main():
     initial_policy = fix_policy(initial_policy)
 
     state_value = np.zeros(len(initial_policy))
+    state_value = policy_evaluation(state_value, initial_policy)
 
-    policy_evaluation(state_value, initial_policy)
-    # print_policy(initial_policy)
+    policy_improvement(state_value, initial_policy)
+
+    print("the end")
 
 
 if __name__ == '__main__':
